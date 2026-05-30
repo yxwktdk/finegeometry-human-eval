@@ -25,3 +25,5 @@ http://127.0.0.1:8000/
 ## Collecting Results
 
 Answers are saved in each user's browser `localStorage`. After finishing, the user should click `Export JSONL` or `Export CSV` and send the exported file back to the dataset maintainer.
+
+The exported JSONL file follows the same core item schema as `finegeo_eval/raw_ans/*/*.jsonl`: the human answer is stored in `predict`, and the ground-truth answer is stored in `answer`. Therefore, the exported file can be renamed and evaluated with the same scripts used for model outputs.

@@ -723,17 +723,46 @@
 
     function exportRows(format) {
       const rows = dataset
-        .map((item) => responses[String(item.qid ?? item.question_id)])
-        .filter(Boolean)
-        .filter((row) => row.human_answer);
+        .map((item) => {
+          const resp = responses[String(item.qid ?? item.question_id)];
+          if (!resp?.human_answer) return null;
+          if (format === "jsonl") return rawAnswerRow(item, resp);
+          return resp;
+        })
+        .filter(Boolean);
       if (!rows.length) return;
       if (format === "jsonl") {
-        download(rows.map((row) => JSON.stringify(row)).join("\n") + "\n", "finegeometry_human_eval.jsonl", "application/jsonl");
+        download(rows.map((row) => JSON.stringify(row)).join("\n") + "\n", "human_eval_raw_ans.jsonl", "application/jsonl");
       } else {
         const cols = ["qid", "task_id", "human_answer", "ground_truth", "correct", "is_trap", "trap_type", "type", "subcategory", "reviewer", "elapsed_ms", "timestamp", "note"];
         const csv = [cols.join(",")].concat(rows.map((row) => cols.map((col) => csvEscape(row[col])).join(","))).join("\n") + "\n";
         download(csv, "finegeometry_human_eval.csv", "text/csv");
       }
+    }
+
+    function rawAnswerRow(item, resp) {
+      return {
+        question_id: item.qid ?? item.question_id,
+        prompt: item.Question ?? item.prompt ?? "",
+        predict: resp.human_answer,
+        reasoning_process: "",
+        answer: item.Answer,
+        type: item.Type ?? item.type,
+        category: item.Category ?? item.category,
+        subcategory: item.SubCategory ?? item.subcategory,
+        ID: item.ID,
+        Is_Trap: !!item.Is_Trap,
+        Trap_Type: item.Trap_Type ?? null,
+        image_path: item.image ?? item.image_path,
+        image_complexity: item.image_complexity ?? null,
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        human_reviewer: resp.reviewer || "",
+        human_correct: !!resp.correct,
+        human_elapsed_ms: resp.elapsed_ms ?? null,
+        human_timestamp: resp.timestamp || "",
+        human_note: resp.note || ""
+      };
     }
 
     function download(content, filename, type) {
