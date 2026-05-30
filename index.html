@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FineGeometry Human Evaluation</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #1f2933;
+      --muted: #6b7280;
+      --border: #d8dee6;
+      --accent: #2563eb;
+      --accent-soft: #e8f0ff;
+      --good: #0f766e;
+      --bad: #b42318;
+      --warn: #9a6700;
+      --shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.94);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+    }
+
+    .topbar {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 12px 18px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .stats {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .pill {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 5px 9px;
+      background: #fff;
+      white-space: nowrap;
+    }
+
+    main {
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 18px;
+      display: grid;
+      grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+      gap: 16px;
+    }
+
+    aside, section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    aside {
+      height: calc(100vh - 88px);
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr) auto;
+      overflow: hidden;
+    }
+
+    .filters {
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 10px;
+      font: inherit;
+      color: var(--text);
+      background: #fff;
+    }
+
+    textarea { min-height: 72px; resize: vertical; }
+
+    .filter-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .progress-wrap {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .progress {
+      height: 8px;
+      background: #edf1f5;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress > div {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      transition: width 160ms ease;
+    }
+
+    .question-list {
+      overflow: auto;
+      padding: 8px;
+      display: grid;
+      gap: 6px;
+      align-content: start;
+    }
+
+    .qitem {
+      width: 100%;
+      text-align: left;
+      border: 1px solid transparent;
+      background: #fff;
+      border-radius: 6px;
+      padding: 9px;
+      cursor: pointer;
+      color: var(--text);
+    }
+
+    .qitem:hover { border-color: var(--border); background: #fafbfc; }
+    .qitem.active { border-color: var(--accent); background: var(--accent-soft); }
+
+    .qitem .meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .qitem .text {
+      margin-top: 4px;
+      font-size: 13px;
+      line-height: 1.35;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .review-card {
+      min-height: calc(100vh - 88px);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      overflow: hidden;
+    }
+
+    .question-head {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--border);
+      display: grid;
+      gap: 10px;
+    }
+
+    .badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 8px;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      background: #fff;
+    }
+
+    .badge.trap {
+      color: var(--warn);
+      border-color: #f2d58a;
+      background: #fff8df;
+    }
+
+    .question {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.35;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .workspace {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(360px, 1fr) minmax(300px, 420px);
+      gap: 0;
+    }
+
+    .image-pane {
+      min-width: 0;
+      min-height: 0;
+      padding: 18px;
+      border-right: 1px solid var(--border);
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(45deg, #f3f4f6 25%, transparent 25%),
+        linear-gradient(-45deg, #f3f4f6 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #f3f4f6 75%),
+        linear-gradient(-45deg, transparent 75%, #f3f4f6 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    }
+
+    .image-pane img {
+      max-width: 100%;
+      max-height: calc(100vh - 290px);
+      object-fit: contain;
+      background: #111827;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    .answer-pane {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .answer-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    button {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font: inherit;
+      font-weight: 650;
+      cursor: pointer;
+    }
+
+    button:hover { border-color: #9aa7b7; background: #f8fafc; }
+    button.primary { background: var(--accent); border-color: var(--accent); color: white; }
+    button.primary:hover { background: #1d4ed8; }
+    button.danger { color: var(--bad); }
+    button.selected { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+
+    .result {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      background: #f9fafb;
+      display: none;
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    .result.good { border-color: #99d5c9; background: #eefbf7; color: var(--good); }
+    .result.bad { border-color: #f1aaa4; background: #fff1f0; color: var(--bad); }
+    .result.show { display: block; }
+
+    .footer-actions {
+      padding: 14px 18px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .nav-actions, .export-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .answer-actions {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .empty {
+      padding: 24px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 980px) {
+      main { grid-template-columns: 1fr; }
+      aside { height: 420px; }
+      .workspace { grid-template-columns: 1fr; }
+      .image-pane { border-right: 0; border-bottom: 1px solid var(--border); }
+      .image-pane img { max-height: 52vh; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <h1>FineGeometry Human Evaluation</h1>
+      <div class="stats" id="stats"></div>
+    </div>
+  </header>
+
+  <main>
+    <aside>
+      <div class="filters">
+        <div>
+          <label for="reviewer">Reviewer</label>
+          <input id="reviewer" placeholder="name or id" />
+        </div>
+        <div>
+          <label for="search">Search</label>
+          <input id="search" placeholder="question, qid, image, category" />
+        </div>
+        <div class="filter-row">
+          <div>
+            <label for="statusFilter">Status</label>
+            <select id="statusFilter">
+              <option value="all">All</option>
+              <option value="unanswered">Unanswered</option>
+              <option value="answered">Answered</option>
+              <option value="wrong">Wrong</option>
+            </select>
+          </div>
+          <div>
+            <label for="trapFilter">Trap</label>
+            <select id="trapFilter">
+              <option value="all">All</option>
+              <option value="trap">Trap</option>
+              <option value="normal">Normal</option>
+            </select>
+          </div>
+        </div>
+        <div class="filter-row">
+          <div>
+            <label for="typeFilter">Type</label>
+            <select id="typeFilter">
+              <option value="all">All</option>
+            </select>
+          </div>
+          <div>
+            <label for="idFilter">Task ID</label>
+            <select id="idFilter">
+              <option value="all">All</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress"><div id="progressBar"></div></div>
+      </div>
+
+      <div class="question-list" id="questionList"></div>
+
+      <div class="footer-actions">
+        <button id="clearFilters">Clear Filters</button>
+      </div>
+    </aside>
+
+    <section class="review-card">
+      <div class="question-head" id="questionHead"></div>
+      <div class="workspace" id="workspace"></div>
+      <div class="footer-actions">
+        <div class="export-actions">
+          <button id="exportJsonl">Export JSONL</button>
+          <button id="exportCsv">Export CSV</button>
+          <button class="danger" id="resetBtn">Reset</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const DATA_URL = "data/minitest_500.jsonl";
+    const IMAGE_ROOT = "images/";
+    const STORAGE_KEY = "finegeometry_human_eval_minitest_500_v1";
+    const REVIEWER_KEY = "finegeometry_human_eval_reviewer";
+
+    let dataset = [];
+    let filtered = [];
+    let currentIndex = 0;
+    let selectedAnswer = "";
+    let questionStartedAt = Date.now();
+    let responses = loadResponses();
+    let autoAdvanceTimer = null;
+
+    const $ = (id) => document.getElementById(id);
+
+    function loadResponses() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      } catch {
+        return {};
+      }
+    }
+
+    function saveResponses() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(responses));
+    }
+
+    function normalizeAnswer(value) {
+      return String(value ?? "")
+        .trim()
+        .toLowerCase()
+        .replaceAll(" ", "")
+        .replaceAll("°", "")
+        .replace(/^answer:/, "")
+        .replace(/\.$/, "");
+    }
+
+    function isCorrect(human, answer, type) {
+      const h = normalizeAnswer(human);
+      const a = normalizeAnswer(answer);
+      if (!h) return false;
+      if (h === "indeterminate" || a === "indeterminate") return h === a;
+      if (type === "free-form") {
+        const hn = Number(h);
+        const an = Number(a);
+        if (!Number.isNaN(hn) && !Number.isNaN(an)) return Math.abs(hn - an) < 0.01;
+      }
+      return h === a;
+    }
+
+    async function loadDataset() {
+      const response = await fetch(DATA_URL);
+      if (!response.ok) throw new Error(`Failed to load ${DATA_URL}`);
+      const text = await response.text();
+      dataset = text.trim().split(/\n+/).map((line) => JSON.parse(line));
+      dataset.sort((a, b) => Number(a.qid) - Number(b.qid));
+      setupFilters();
+      applyFilters();
+    }
+
+    function setupFilters() {
+      const typeValues = [...new Set(dataset.map((x) => x.Type || x.type).filter(Boolean))].sort();
+      const idValues = [...new Set(dataset.map((x) => x.ID).filter((x) => x !== undefined))].sort((a, b) => Number(a) - Number(b));
+      for (const value of typeValues) $("typeFilter").append(new Option(value, value));
+      for (const value of idValues) $("idFilter").append(new Option(String(value), String(value)));
+
+      $("reviewer").value = localStorage.getItem(REVIEWER_KEY) || "";
+      $("reviewer").addEventListener("input", () => localStorage.setItem(REVIEWER_KEY, $("reviewer").value.trim()));
+    }
+
+    function applyFilters() {
+      const q = $("search").value.trim().toLowerCase();
+      const status = $("statusFilter").value;
+      const trap = $("trapFilter").value;
+      const type = $("typeFilter").value;
+      const id = $("idFilter").value;
+
+      filtered = dataset.filter((item) => {
+        const qid = String(item.qid ?? item.question_id);
+        const resp = responses[qid];
+        const answered = !!resp?.human_answer;
+        const wrong = answered && !resp.correct;
+        const hay = [
+          item.qid, item.ID, item.Question, item.Type, item.SubCategory,
+          JSON.stringify(item.Category), item.image
+        ].join(" ").toLowerCase();
+
+        if (q && !hay.includes(q)) return false;
+        if (status === "unanswered" && answered) return false;
+        if (status === "answered" && !answered) return false;
+        if (status === "wrong" && !wrong) return false;
+        if (trap === "trap" && !item.Is_Trap) return false;
+        if (trap === "normal" && item.Is_Trap) return false;
+        if (type !== "all" && (item.Type || item.type) !== type) return false;
+        if (id !== "all" && String(item.ID) !== id) return false;
+        return true;
+      });
+
+      if (currentIndex >= filtered.length) currentIndex = Math.max(0, filtered.length - 1);
+      renderList();
+      renderCurrent();
+      renderStats();
+    }
+
+    function renderStats() {
+      const answered = dataset.filter((item) => responses[String(item.qid ?? item.question_id)]?.human_answer).length;
+      const correct = dataset.filter((item) => responses[String(item.qid ?? item.question_id)]?.correct).length;
+      const accuracy = answered ? `${(correct / answered * 100).toFixed(1)}%` : "-";
+      $("stats").innerHTML = [
+        `<span class="pill">Items ${dataset.length}</span>`,
+        `<span class="pill">Answered ${answered}</span>`,
+        `<span class="pill">Accuracy ${accuracy}</span>`,
+        `<span class="pill">Filtered ${filtered.length}</span>`
+      ].join("");
+      $("progressBar").style.width = dataset.length ? `${answered / dataset.length * 100}%` : "0%";
+    }
+
+    function renderList() {
+      const list = $("questionList");
+      if (!filtered.length) {
+        list.innerHTML = `<div class="empty">No questions match the filters.</div>`;
+        return;
+      }
+      list.innerHTML = filtered.map((item, idx) => {
+        const qid = String(item.qid ?? item.question_id);
+        const resp = responses[qid];
+        const marker = resp?.human_answer ? (resp.correct ? "OK" : "Wrong") : "Open";
+        return `
+          <button class="qitem ${idx === currentIndex ? "active" : ""}" data-idx="${idx}">
+            <div class="meta">
+              <span>QID ${qid} · ID ${item.ID}</span>
+              <span>${marker}</span>
+            </div>
+            <div class="text">${escapeHtml(item.Question)}</div>
+          </button>
+        `;
+      }).join("");
+
+      for (const btn of list.querySelectorAll(".qitem")) {
+        btn.addEventListener("click", () => {
+          currentIndex = Number(btn.dataset.idx);
+          renderList();
+          renderCurrent();
+        });
+      }
+    }
+
+    function answerOptions(item) {
+      const q = item.Question || "";
+      if ((item.Type || item.type) === "free-form") return [];
+      const options = [];
+      if (q.includes('"A"')) options.push("A");
+      if (q.includes('"B"')) options.push("B");
+      if (q.includes('"C"')) options.push("C");
+      if (q.includes('"D"')) options.push("D");
+      if (q.includes('"E"')) options.push("E");
+      if (!options.length) options.push("yes", "no");
+      options.push("Indeterminate");
+      return options;
+    }
+
+    function renderCurrent() {
+      if (!filtered.length) {
+        $("questionHead").innerHTML = `<div class="empty">No question selected.</div>`;
+        $("workspace").innerHTML = "";
+        return;
+      }
+
+      const item = filtered[currentIndex];
+      const qid = String(item.qid ?? item.question_id);
+      const resp = responses[qid] || {};
+      selectedAnswer = resp.human_answer || "";
+      questionStartedAt = Date.now();
+
+      $("questionHead").innerHTML = `
+        <div class="badges">
+          <span class="badge">QID ${qid}</span>
+          <span class="badge">Task ${item.ID}</span>
+          <span class="badge">${escapeHtml(item.Type)}</span>
+          <span class="badge">${escapeHtml((item.Category || []).join(" / "))}</span>
+          <span class="badge">${escapeHtml(item.SubCategory)}</span>
+          ${item.Is_Trap ? `<span class="badge trap">Trap ${escapeHtml(item.Trap_Type || "")}</span>` : `<span class="badge">Normal</span>`}
+        </div>
+        <p class="question">${escapeHtml(item.Question)}</p>
+      `;
+
+      const opts = answerOptions(item);
+      const freeForm = (item.Type || item.type) === "free-form";
+      $("workspace").innerHTML = `
+        <div class="image-pane">
+          <img src="${IMAGE_ROOT + item.image}" alt="Geometry image for QID ${qid}" />
+        </div>
+        <div class="answer-pane">
+          <div>
+            <label>Human Answer</label>
+            ${freeForm ? `
+              <input id="freeAnswer" placeholder="number or Indeterminate" value="${escapeAttr(selectedAnswer)}" />
+              <div style="height:8px"></div>
+              <button id="indeterminateBtn">Indeterminate</button>
+            ` : `
+              <div class="answer-buttons">
+                ${opts.map((opt) => `<button class="${normalizeAnswer(opt) === normalizeAnswer(selectedAnswer) ? "selected" : ""}" data-answer="${escapeAttr(opt)}">${escapeHtml(opt)}</button>`).join("")}
+              </div>
+            `}
+          </div>
+          <div>
+            <label for="note">Note</label>
+            <textarea id="note" placeholder="optional">${escapeHtml(resp.note || "")}</textarea>
+          </div>
+          <div class="answer-actions">
+            <button class="primary" id="submitAnswer">Submit</button>
+            <button id="prevBtnInline">Previous</button>
+            <button id="nextBtnInline">Next</button>
+          </div>
+          <div id="result" class="result ${resp.human_answer ? "show " + (resp.correct ? "good" : "bad") : ""}">
+            ${resp.human_answer ? resultHtml(item, resp) : ""}
+          </div>
+        </div>
+      `;
+
+      if (freeForm) {
+        $("freeAnswer").addEventListener("input", (event) => selectedAnswer = event.target.value);
+        $("indeterminateBtn").addEventListener("click", () => {
+          selectedAnswer = "Indeterminate";
+          $("freeAnswer").value = selectedAnswer;
+        });
+      } else {
+        for (const btn of $("workspace").querySelectorAll("[data-answer]")) {
+          btn.addEventListener("click", () => {
+            selectedAnswer = btn.dataset.answer;
+            for (const other of $("workspace").querySelectorAll("[data-answer]")) other.classList.remove("selected");
+            btn.classList.add("selected");
+          });
+        }
+      }
+
+      $("note").addEventListener("input", () => {
+        const current = responses[qid] || {};
+        current.note = $("note").value;
+        responses[qid] = current;
+        saveResponses();
+      });
+
+      $("submitAnswer").addEventListener("click", () => submitCurrent());
+      $("prevBtnInline").addEventListener("click", () => move(-1));
+      $("nextBtnInline").addEventListener("click", () => move(1));
+    }
+
+    function submitCurrent() {
+      const item = filtered[currentIndex];
+      const qid = String(item.qid ?? item.question_id);
+      const answer = selectedAnswer.trim();
+      if (!answer) return;
+      const correct = isCorrect(answer, item.Answer, item.Type);
+      responses[qid] = {
+        qid,
+        task_id: item.ID,
+        human_answer: answer,
+        ground_truth: item.Answer,
+        correct,
+        is_trap: !!item.Is_Trap,
+        trap_type: item.Trap_Type,
+        type: item.Type,
+        category: item.Category,
+        subcategory: item.SubCategory,
+        image: item.image,
+        question: item.Question,
+        note: $("note").value,
+        reviewer: $("reviewer").value.trim(),
+        elapsed_ms: Date.now() - questionStartedAt,
+        timestamp: new Date().toISOString()
+      };
+      saveResponses();
+      renderList();
+      renderStats();
+      renderCurrent();
+      clearTimeout(autoAdvanceTimer);
+      if (currentIndex < filtered.length - 1) {
+        autoAdvanceTimer = setTimeout(() => move(1), 1000);
+      }
+    }
+
+    function resultHtml(item, resp) {
+      const label = resp.correct ? "Correct" : "Wrong";
+      return `
+        <strong>${label}</strong><br />
+        Human: ${escapeHtml(resp.human_answer)}<br />
+        Ground truth: ${escapeHtml(item.Answer)}
+      `;
+    }
+
+    function move(delta) {
+      if (!filtered.length) return;
+      clearTimeout(autoAdvanceTimer);
+      currentIndex = Math.min(filtered.length - 1, Math.max(0, currentIndex + delta));
+      renderList();
+      renderCurrent();
+    }
+
+    function exportRows(format) {
+      const rows = dataset
+        .map((item) => responses[String(item.qid ?? item.question_id)])
+        .filter(Boolean)
+        .filter((row) => row.human_answer);
+      if (!rows.length) return;
+      if (format === "jsonl") {
+        download(rows.map((row) => JSON.stringify(row)).join("\n") + "\n", "finegeometry_human_eval.jsonl", "application/jsonl");
+      } else {
+        const cols = ["qid", "task_id", "human_answer", "ground_truth", "correct", "is_trap", "trap_type", "type", "subcategory", "reviewer", "elapsed_ms", "timestamp", "note"];
+        const csv = [cols.join(",")].concat(rows.map((row) => cols.map((col) => csvEscape(row[col])).join(","))).join("\n") + "\n";
+        download(csv, "finegeometry_human_eval.csv", "text/csv");
+      }
+    }
+
+    function download(content, filename, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function csvEscape(value) {
+      const str = Array.isArray(value) ? value.join("/") : String(value ?? "");
+      return `"${str.replaceAll('"', '""')}"`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value);
+    }
+
+    for (const id of ["search", "statusFilter", "trapFilter", "typeFilter", "idFilter"]) {
+      $(id).addEventListener("input", () => {
+        currentIndex = 0;
+        applyFilters();
+      });
+    }
+
+    $("clearFilters").addEventListener("click", () => {
+      $("search").value = "";
+      $("statusFilter").value = "all";
+      $("trapFilter").value = "all";
+      $("typeFilter").value = "all";
+      $("idFilter").value = "all";
+      currentIndex = 0;
+      applyFilters();
+    });
+    $("exportJsonl").addEventListener("click", () => exportRows("jsonl"));
+    $("exportCsv").addEventListener("click", () => exportRows("csv"));
+    $("resetBtn").addEventListener("click", () => {
+      if (!confirm("Clear all local human evaluation answers?")) return;
+      responses = {};
+      saveResponses();
+      applyFilters();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      if (event.target.matches("input, textarea, select")) return;
+      if (event.key === "ArrowLeft") move(-1);
+      if (event.key === "ArrowRight") move(1);
+      if (event.key === "Enter") submitCurrent();
+    });
+
+    loadDataset().catch((error) => {
+      $("questionHead").innerHTML = `<div class="empty">${escapeHtml(error.message)}</div>`;
+      $("workspace").innerHTML = `<div class="empty">Start a local server from the repository root, then open /human_eval/index.html.</div>`;
+    });
+  </script>
+</body>
+</html>
