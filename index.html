@@ -305,6 +305,32 @@
     .result.bad { border-color: #f1aaa4; background: #fff1f0; color: var(--bad); }
     .result.show { display: block; }
 
+    .glossary {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfe;
+      display: grid;
+      gap: 8px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .glossary-title {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .glossary-item {
+      display: grid;
+      gap: 2px;
+    }
+
+    .glossary-item strong {
+      color: var(--text);
+    }
+
     .footer-actions {
       padding: 14px 18px;
       border-top: 1px solid var(--border);
@@ -426,6 +452,26 @@
     const IMAGE_ROOT = "images/";
     const STORAGE_KEY = "finegeometry_human_eval_minitest_500_v1";
     const REVIEWER_KEY = "finegeometry_human_eval_reviewer";
+    const GLOSSARY = [
+      { terms: ["tangent", "tangent to"], zh: "相切", desc: "直线或圆与圆只在一个点接触。" },
+      { terms: ["inscribed angle"], zh: "圆周角/内接角", desc: "顶点在圆上，角的两边与圆相交。" },
+      { terms: ["inscribed in"], zh: "内接", desc: "一个图形的顶点都落在另一个图形边界上。" },
+      { terms: ["circumscribed about"], zh: "外切/外接于", desc: "一个图形包围另一个图形，边界与其相切或经过相关点。" },
+      { terms: ["central angle"], zh: "圆心角", desc: "顶点位于圆心的角。" },
+      { terms: ["vertical angles"], zh: "对顶角", desc: "两条直线相交时相对的一对角。" },
+      { terms: ["perpendicular"], zh: "垂直", desc: "两条线相交成 90 度。" },
+      { terms: ["collinear"], zh: "共线", desc: "多个点位于同一条直线上。" },
+      { terms: ["colinear"], zh: "共线", desc: "与 collinear 同义，表示在同一条直线上。" },
+      { terms: ["intersect", "intersection"], zh: "相交", desc: "两个几何对象有公共点。" },
+      { terms: ["chord"], zh: "弦", desc: "圆上两点连接成的线段。" },
+      { terms: ["radius"], zh: "半径", desc: "圆心到圆上一点的距离或线段。" },
+      { terms: ["diameter"], zh: "直径", desc: "经过圆心、端点在圆上的线段。" },
+      { terms: ["vertex"], zh: "顶点", desc: "角、多边形或三角形的端点/交点。" },
+      { terms: ["extension"], zh: "延长线", desc: "线段端点之外、沿同一直线继续延伸的部分。" },
+      { terms: ["exterior angle"], zh: "外角", desc: "多边形或三角形边延长后形成的外侧角。" },
+      { terms: ["interior angle"], zh: "内角", desc: "多边形或三角形内部的角。" },
+      { terms: ["separate"], zh: "相离", desc: "两个几何对象没有公共区域或公共点。" }
+    ];
 
     let dataset = [];
     let filtered = [];
@@ -470,6 +516,38 @@
         if (!Number.isNaN(hn) && !Number.isNaN(an)) return Math.abs(hn - an) < 0.01;
       }
       return h === a;
+    }
+
+    function matchedGlossaryItems(text) {
+      const q = String(text || "").toLowerCase();
+      return GLOSSARY.filter((item) => item.terms.some((term) => q.includes(term)));
+    }
+
+    function glossaryHtml(items, title = "Term Hints") {
+      if (!items.length) return "";
+      return `
+        <div class="glossary">
+          <div class="glossary-title">${escapeHtml(title)}</div>
+          ${items.map((item) => `
+            <div class="glossary-item">
+              <strong>${escapeHtml(item.terms[0])}：${escapeHtml(item.zh)}</strong>
+              <span>${escapeHtml(item.desc)}</span>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function completedGlossaryHtml() {
+      const answered = dataset.filter((item) => responses[String(item.qid ?? item.question_id)]?.human_answer).length;
+      if (!dataset.length || answered < dataset.length) return "";
+      const seen = new Map();
+      for (const item of dataset) {
+        for (const term of matchedGlossaryItems(item.Question)) {
+          seen.set(term.zh, term);
+        }
+      }
+      return glossaryHtml([...seen.values()], "Completed Glossary");
     }
 
     async function loadDataset() {
@@ -615,6 +693,7 @@
           <img src="${IMAGE_ROOT + item.image}" alt="Geometry image for QID ${qid}" />
         </div>
         <div class="answer-pane">
+          ${glossaryHtml(matchedGlossaryItems(item.Question))}
           <div>
             <label>Human Answer</label>
             ${freeForm ? `
@@ -639,6 +718,7 @@
           <div id="result" class="result ${resp.human_answer ? "show " + (resp.correct ? "good" : "bad") : ""}">
             ${resp.human_answer ? resultHtml(item, resp) : ""}
           </div>
+          ${completedGlossaryHtml()}
         </div>
       `;
 
